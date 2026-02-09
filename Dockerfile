@@ -13,3 +13,4 @@ COPY --from=build /home/gradle/src/build/libs/*.jar app.jar
 ENV JAVA_OPTS="-Dorg.slf4j.simpleLogger.defaultLogLevel=info"
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+

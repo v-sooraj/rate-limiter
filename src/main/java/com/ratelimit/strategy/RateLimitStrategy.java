@@ -6,3 +6,4 @@ import com.ratelimit.rules.RateLimitRule;
 public interface RateLimitStrategy {
     RateLimitResult execute(String key, RateLimitRule rule);
 }
+
