@@ -1,61 +1,51 @@
 package com.ratelimit;
 
-import com.ratelimit.api.RateLimitResult;
-import com.ratelimit.config.RateLimiterConfig;
-import com.ratelimit.config.RedisConfig;
-import com.ratelimit.engine.RateLimitEngine;
-import com.ratelimit.key.FlexibleKeyResolver;
-import com.ratelimit.rules.RateLimitRule;
-import com.ratelimit.strategy.RateLimitStrategy;
-import com.ratelimit.strategy.SlidingWindowLogStrategy;
+import com.ratelimit.service.impl.SlidingWindowLog;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class Main {
-    public static void main(String[] args) throws InterruptedException {
+    static void main() throws InterruptedException {
+        // 1. Initialize our service
+        SlidingWindowLog rateLimiter = new SlidingWindowLog();
 
-        RateLimiterConfig config = new RateLimiterConfig();
+        // 2. Configuration: 10 requests allowed every 5 seconds
+        String clientId = "test-client-001";
+        int limit = 10;
+        int windowMs = 5000;
 
-        // 1. Initialize Redis strategy & engine
-        RateLimitStrategy strategy = new SlidingWindowLogStrategy(RedisConfig.INSTANCE.getClient());
-        RateLimitEngine engine = new RateLimitEngine(strategy, config.failurePolicy());
+        // 3. Create a thread pool to simulate concurrent traffic
+        // This is crucial to test if our Lua script handles race conditions!
+        ExecutorService executor = Executors.newFixedThreadPool(5);
 
-        // 2. Define rules
-        RateLimitRule freeTier = new RateLimitRule("FREE_TIER", 5, 10_000);
-        RateLimitRule proTier = new RateLimitRule("PRO_TIER", 50, 10_000);
+        System.out.println("Starting Rate Limiter Simulator...");
+        System.out.println("Config: " + limit + " requests per " + (windowMs / 1000) + "s");
 
-        // 3. Resolve user context & scope
-        String userTier = System.getenv().getOrDefault("USER_TIER", "FREE");
-        String userId = System.getenv().getOrDefault("USER_ID", "anon-1");
-        String clientIp = System.getenv().getOrDefault("CLIENT_IP", null);
-        String apiKey = System.getenv().getOrDefault("API_KEY", null);
-
-        RateLimitRule activeRule = userTier.equalsIgnoreCase("PRO") ? proTier : freeTier;
-
-        // 4. Use flexible key resolver
-        FlexibleKeyResolver resolver = new FlexibleKeyResolver(config.keyPrefix());
-        String key = resolver.resolve(userId, clientIp, apiKey, activeRule);
-
-        System.out.printf("System active. Tier: %s | Rule: %s | Key: %s%n",
-                userTier, activeRule.name(), key);
-
-        // 5. Simulate requests
-        ExecutorService executor = Executors.newFixedThreadPool(3);
-        for (int i = 1; i <= 10; i++) {
-            final int requestId = i;
+        // 4. Fire 20 requests rapidly (twice the allowed limit)
+        for (int i = 1; i <= 20; i++) {
+            int requestId = i;
             executor.submit(() -> {
-                RateLimitResult result = engine.evaluate(key, activeRule);
-                String status = result.allowed() ? "ALLOWED" : "BLOCKED";
-                System.out.printf("[Req #%d] %s | Remaining: %d | RetryAfterMs: %d%n",
-                        requestId, status, result.remaining(), result.retryAfterMs());
+                boolean allowed = rateLimiter.isAllowed(clientId, limit, windowMs);
+                String status = allowed ? "ALLOWED" : "BLOCKED";
+
+                // Get the container ID (if running in Docker) or thread name
+                String source = System.getenv("HOSTNAME") != null ?
+                        System.getenv("HOSTNAME") : Thread.currentThread().getName();
+
+                System.out.printf("[%s] Request #%d: %s%n", source, requestId, status);
             });
-            Thread.sleep(200);
+
+            // Small sleep to spread them out slightly
+            Thread.sleep(100);
         }
 
         executor.shutdown();
-        executor.awaitTermination(5, TimeUnit.SECONDS);
-        System.out.println("Simulation complete.");
+        executor.awaitTermination(1, TimeUnit.MINUTES);
+
+        System.out.println("Simulation complete. Keeping process alive for Docker logs...");
+        // Keep the container running so we can inspect it
+        Thread.currentThread().join();
     }
 }

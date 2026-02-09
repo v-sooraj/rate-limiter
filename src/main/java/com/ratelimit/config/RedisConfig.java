@@ -1,7 +1,5 @@
 package com.ratelimit.config;
 
-import com.ratelimit.redis.JedisRedisClient;
-import com.ratelimit.redis.RedisClient;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.UnifiedJedis;
 import redis.clients.jedis.providers.PooledConnectionProvider;
@@ -9,23 +7,21 @@ import redis.clients.jedis.providers.PooledConnectionProvider;
 public enum RedisConfig {
 
     INSTANCE; // Single instance
+    private final UnifiedJedis jedis;
 
-    private final RedisClient redisClient;
-
+    // The constructor is private and called once by the JVM
     RedisConfig() {
         String host = System.getenv().getOrDefault("REDIS_HOST", "localhost");
         int port = 6379;
 
         HostAndPort address = new HostAndPort(host, port);
         PooledConnectionProvider provider = new PooledConnectionProvider(address);
-        UnifiedJedis jedis = new UnifiedJedis(provider);
+        this.jedis = new UnifiedJedis(provider);
 
-        this.redisClient = new JedisRedisClient(jedis);
-
-        System.out.println("Redis Client Initialized");
+        System.out.println("Redis Client Initialized via Enum Singleton");
     }
 
-    public RedisClient getClient() {
-        return redisClient;
+    public UnifiedJedis getClient() {
+        return jedis;
     }
 }
