@@ -1,0 +1,52 @@
+version: "3.9"
+
+services:
+  # --- Redis database ---
+  redis:
+    image: redis:7-alpine
+    container_name: rate-limiter-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - rl-network
+
+  # --- Rate Limiter App ---
+  app:
+    build: .
+    deploy:
+      replicas: 3
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KEY_PREFIX=prod                   # Global namespace
+      - RATE_LIMIT_SCOPE=user_ip          # Options: user, ip, user_ip
+      - USER_ID=bob_the_builder           # Demo user
+      - CLIENT_IP=192.168.1.100           # Demo IP
+      - API_KEY=demo-api-key              # Optional
+      - FAILURE_POLICY=FAIL_OPEN          # Fail-open or fail-closed
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - rl-network
+
+  # --- RedisInsight for visualization ---
+  insight:
+    image: redislabs/redisinsight:latest
+    container_name: rate-limiter-insight
+    ports:
+      - "8001:8001"
+    depends_on:
+      - redis
+    networks:
+      - rl-network
+
+networks:
+  rl-network:
+    driver: bridge
+
