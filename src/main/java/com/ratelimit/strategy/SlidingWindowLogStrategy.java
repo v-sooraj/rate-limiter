@@ -11,7 +11,7 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public class SlidingWindowLogStrategy implements RateLimitStrategy {
 
-    private static final String LUA_SCRIPT = ScriptLoader.load("/scripts/sliding_window.lua");
+    private static final String LUA_SCRIPT = ScriptLoader.load("/scripts/sliding_window_log.lua");
 
     private final RedisClient redisClient;
 
