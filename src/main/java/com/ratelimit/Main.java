@@ -35,9 +35,10 @@ public class Main {
 
         RateLimiterConfig config = new RateLimiterConfig();
         RateLimitEngine engine = RateLimitEngine.builder()
-                .withKeyResolver(new FlexibleKeyResolver(config.keyPrefix()))
                 .withConfig(config)
+                .withKeyResolver(new FlexibleKeyResolver(config.keyPrefix()))
                 .withStrategy(new SlidingWindowLogStrategy(redisClient))
+                .withDefaultL1Cache()
                 .build();
 
         // 5. Simulate requests

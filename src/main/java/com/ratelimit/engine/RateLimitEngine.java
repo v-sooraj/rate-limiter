@@ -35,7 +35,7 @@ public class RateLimitEngine implements RateLimiter {
         this.keyResolver = builder.keyResolver;
         this.strategy = builder.strategy;
         this.failurePolicy = builder.config.failurePolicy();
-        this.negativeCache = builder.buildCache();
+        this.negativeCache = builder.l1Cache;
     }
 
     public static Builder builder() {
@@ -113,19 +113,18 @@ public class RateLimitEngine implements RateLimiter {
             return this;
         }
 
-        public RateLimitEngine build() {
-            if (strategy == null) throw new IllegalStateException("Strategy is required");
-            return new RateLimitEngine(this);
+        public Builder withDefaultL1Cache() {
+            this.l1Cache = Caffeine.newBuilder()
+                    .maximumSize(100_000)
+                    .expireAfterWrite(1, TimeUnit.MINUTES)
+                    .build();
+            return this;
         }
 
-        private Cache<String, RateLimitResult> buildCache() {
-            if (config.isL1Enabled()) {
-                return Caffeine.newBuilder()
-                        .maximumSize(config.l1MaxEntries())
-                        .expireAfterWrite(config.l1Ttl().toSeconds(), TimeUnit.SECONDS)
-                        .build();
-            }
-            return null;
+        public RateLimitEngine build() {
+            if (strategy == null) throw new IllegalStateException("Strategy is required");
+            if (keyResolver == null) throw new IllegalStateException("KeyResolver is required");
+            return new RateLimitEngine(this);
         }
     }
 }
