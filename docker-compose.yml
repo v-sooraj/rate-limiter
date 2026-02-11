@@ -29,6 +29,9 @@ services:
       - CLIENT_IP=192.168.1.100           # Demo IP
       - API_KEY=demo-api-key              # Optional
       - FAILURE_POLICY=FAIL_OPEN          # Fail-open or fail-closed
+      - RL_L1_ENABLED=true
+      - RL_L1_MAX_ENTRIES=100000
+      - RL_L1_TTL_SECONDS=5
     depends_on:
       redis:
         condition: service_healthy

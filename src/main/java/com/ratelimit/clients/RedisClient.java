@@ -1,4 +1,4 @@
-package com.ratelimit.redis;
+package com.ratelimit.clients;
 
 import java.util.List;
 

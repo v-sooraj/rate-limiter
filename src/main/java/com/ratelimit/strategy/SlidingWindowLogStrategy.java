@@ -1,7 +1,7 @@
 package com.ratelimit.strategy;
 
 import com.ratelimit.api.RateLimitResult;
-import com.ratelimit.redis.RedisClient;
+import com.ratelimit.clients.RedisClient;
 import com.ratelimit.rules.RateLimitRule;
 import com.ratelimit.util.ScriptLoader;
 
