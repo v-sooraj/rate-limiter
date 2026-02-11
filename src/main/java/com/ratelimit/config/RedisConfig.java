@@ -1,7 +1,7 @@
 package com.ratelimit.config;
 
-import com.ratelimit.redis.JedisRedisClient;
-import com.ratelimit.redis.RedisClient;
+import com.ratelimit.clients.JedisRedisClient;
+import com.ratelimit.clients.RedisClient;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.UnifiedJedis;
 import redis.clients.jedis.providers.PooledConnectionProvider;

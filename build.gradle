@@ -12,6 +12,7 @@ repositories {
 dependencies {
     implementation 'redis.clients:jedis:7.2.1'
     implementation 'org.slf4j:slf4j-simple:2.0.9'
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.2.3'
 
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'

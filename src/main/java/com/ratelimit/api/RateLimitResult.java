@@ -27,4 +27,14 @@ public record RateLimitResult(
                 ruleName
         );
     }
+
+    public static RateLimitResult blocked(String ruleName, long waitUntil) {
+        return new RateLimitResult(
+                false,
+                0,
+                waitUntil,
+                -1,
+                ruleName
+        );
+    }
 }
